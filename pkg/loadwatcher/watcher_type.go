@@ -13,6 +13,8 @@ type LoadThresholdEvent struct {
 type Watcher struct {
 	TickerInterval time.Duration
 	LoadThreshold  float64
+
+	isCurrentlyHigh bool
 }
 
 func NewWatcher(loadThreshold int) (*Watcher, error) {

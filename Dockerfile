@@ -3,9 +3,8 @@ FROM golang:1.12 AS builder
 COPY . /work
 WORKDIR /work
 RUN useradd loadwatcher
-RUN go mod download && \
-    cd cmd && \
-    CGO_ENABLED=0 go build -ldflags="-w -s" -o /work/loadwatcher
+RUN cd cmd && \
+    CGO_ENABLED=0 go build -mod vendor -ldflags="-w -s" -o /work/loadwatcher
 
 FROM scratch
 

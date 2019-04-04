@@ -1,6 +1,7 @@
 package loadwatcher
 
 import (
+	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,9 +18,16 @@ func (e *Evicter) CanEvict() bool {
 }
 
 func (e *Evicter) EvictPod(evt LoadThresholdEvent) (bool, error) {
-	if !e.CanEvict() {
+	if evt.Load15 < e.threshold {
 		return false, nil
 	}
+
+	if !e.CanEvict() {
+		glog.Infof("eviction threshold exceeded; still in back-off")
+		return false, nil
+	}
+
+	glog.Infof("searching for pod to evict")
 
 	fieldSelector := fields.OneTermEqualSelector("spec.nodeName", e.nodeName)
 
@@ -46,11 +54,13 @@ func (e *Evicter) EvictPod(evt LoadThresholdEvent) (bool, error) {
 		},
 	}
 
+	glog.Infof("eviction: %+v", eviction)
+
 	e.lastEviction = time.Now()
 
 	e.recorder.Eventf(podToEvict, v1.EventTypeWarning, "EvictHighLoad", "evicting pod due to high load on node load15=%.2f threshold=%.2f", evt.Load15, evt.LoadThreshold)
 	e.recorder.Eventf(e.nodeRef, v1.EventTypeWarning, "EvictHighLoad", "evicting pod due to high load on node load15=%.2f threshold=%.2f", evt.Load15, evt.LoadThreshold)
 
-	err = e.client.CoreV1().Pods("").Evict(&eviction)
+	err = e.client.CoreV1().Pods(podToEvict.Namespace).Evict(&eviction)
 	return true, err
 }

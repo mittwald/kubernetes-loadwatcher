@@ -2,11 +2,27 @@ package loadwatcher
 
 import (
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/jsonpatch"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+func (t *Tainter) IsNodeTainted() (bool, error) {
+	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for i := range node.Spec.Taints {
+		if node.Spec.Taints[i].Key == TaintKey {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
 
 func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
@@ -18,6 +34,13 @@ func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 
 	if nodeCopy.Spec.Taints == nil {
 		nodeCopy.Spec.Taints = make([]v1.Taint, 0, 1)
+	}
+
+	for i := range nodeCopy.Spec.Taints {
+		if nodeCopy.Spec.Taints[i].Key == TaintKey {
+			glog.Infof("wanted to taint node %s, but taint already exists", nodeCopy.Name)
+			return nil
+		}
 	}
 
 	nodeCopy.Spec.Taints = append(nodeCopy.Spec.Taints, v1.Taint{
@@ -53,23 +76,26 @@ func (t *Tainter) UntaintNode(evt LoadThresholdEvent) error {
 		}
 	}
 
-	if taintIndex >= 0 {
-		t.recorder.Eventf(t.nodeRef, v1.EventTypeNormal, "LoadThresholdDeceeded", "load15 on node was %.2f; deceeded threshold of %.2f. untainting node", evt.Load15, evt.LoadThreshold)
+	if taintIndex == -1 {
+		glog.Infof("wanted to remove taint from node %s, but taint was already gone", node.Name)
+		return nil
+	}
 
-		_, err := t.client.CoreV1().Nodes().Patch(t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
-			Op: "test",
-			Path: fmt.Sprintf("/spec/taints/%d/key", taintIndex),
-			Value: TaintKey,
-		}, {
-			Op:   "remove",
-			Path: fmt.Sprintf("/spec/taints/%d", taintIndex),
-			Value: "",
-		}}.ToJSON())
+	t.recorder.Eventf(t.nodeRef, v1.EventTypeNormal, "LoadThresholdDeceeded", "load15 on node was %.2f; deceeded threshold of %.2f. untainting node", evt.Load15, evt.LoadThreshold)
 
-		if err != nil {
-			t.recorder.Eventf(t.nodeRef, v1.EventTypeWarning, "NodePatchError", "could not patch node: %s", err.Error())
-			return err
-		}
+	_, err = t.client.CoreV1().Nodes().Patch(t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
+		Op: "test",
+		Path: fmt.Sprintf("/spec/taints/%d/key", taintIndex),
+		Value: TaintKey,
+	}, {
+		Op:   "remove",
+		Path: fmt.Sprintf("/spec/taints/%d", taintIndex),
+		Value: "",
+	}}.ToJSON())
+
+	if err != nil {
+		t.recorder.Eventf(t.nodeRef, v1.EventTypeWarning, "NodePatchError", "could not patch node: %s", err.Error())
+		return err
 	}
 
 	return nil

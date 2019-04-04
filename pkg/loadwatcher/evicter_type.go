@@ -13,7 +13,7 @@ import (
 
 type Evicter struct {
 	client       kubernetes.Interface
-	threshold    float32
+	threshold    float64
 	nodeName     string
 	nodeRef      *v1.ObjectReference
 	recorder     record.EventRecorder
@@ -53,7 +53,7 @@ func NewEvicter(client kubernetes.Interface, threshold int, nodeName string, bac
 
 	return &Evicter{
 		client:    client,
-		threshold: float32(threshold),
+		threshold: float64(threshold),
 		nodeName:  nodeName,
 		nodeRef:   nodeRef,
 		recorder:  r,

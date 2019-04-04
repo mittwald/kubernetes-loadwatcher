@@ -61,6 +61,13 @@ func main() {
 		close(closeChan)
 	}()
 
+	isTainted, err := t.IsNodeTainted()
+	if err != nil {
+		panic(err)
+	}
+
+	w.SetAsHigh(isTainted)
+
 	exc, dec, errs := w.Run(closeChan)
 	for {
 		select {

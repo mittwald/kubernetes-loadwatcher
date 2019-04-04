@@ -4,7 +4,7 @@ Automatically taint and evict nodes with high CPU load.
 
 ## Synopsis
 
-By default, Kubernetes will not evict Pods from a node based on CPU usage, since CPU is considered a compressible resource. However, in some cases it might be desirable to actually evict some pods from a node with high CPU load.
+By default, Kubernetes will not evict Pods from a node based on CPU usage, since CPU is considered a compressible resource. However, in some cases it might be desirable to actually evict some pods from a node with high CPU load (or at least to prevent Kubernetes from scheduling even more pods on a node that is already overloaded).
 
 This project contains a small Kubernetes controller that watches each node's CPU load; when a certain threshold is exceeded, the node will be tainted (so that no additional workloads are scheduled on an already-overloaded node) and finally the controller will start to evict Pods from the node.
 

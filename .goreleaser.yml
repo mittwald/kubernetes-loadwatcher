@@ -1,0 +1,34 @@
+before:
+  hooks:
+    - go vet ./...
+    - go test -v ./...
+builds:
+- main: ./cmd/main.go
+  binary: kubernetes-loadwatcher
+  env:
+    - CGO_ENABLED=0
+    - GO111MODULE=on
+  goos:
+    - linux
+  goarch:
+    - amd64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+dockers:
+- image_templates:
+  - quay.io/mittwald/kubernetes-loadwatcher:latest
+  - quay.io/mittwald/kubernetes-loadwatcher:stable
+  - quay.io/mittwald/kubernetes-loadwatcher:{{ .Tag }}
+  binaries:
+    - kubernetes-loadwatcher
+  goos: linux
+  goarch: amd64
+  goarm: ''

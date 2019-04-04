@@ -1,5 +1,8 @@
 # Kubernetes Load Watcher
 
+[![Build Status](https://travis-ci.com/mittwald/kubernetes-loadwatcher.svg?branch=master)](https://travis-ci.com/mittwald/kubernetes-loadwatcher)
+[![Docker Repository on Quay](https://quay.io/repository/mittwald/kubernetes-loadwatcher/status "Docker Repository on Quay")](https://quay.io/repository/mittwald/kubernetes-loadwatcher)
+
 Automatically taint and evict nodes with high CPU load.
 
 ## Synopsis

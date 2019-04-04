@@ -30,6 +30,13 @@ spec:
                   fieldPath: spec.nodeName
           args:
             - -node-name=$(NODE_NAME)
+            {{- if .Values.taintThreshold }}
+            - -taint-threshold={{ .Values.taintThreshold }}
+            {{- end }}
+            {{- if .Values.evictThreshold }}
+            - -evict-threshold={{ .Values.evictThreshold }}
+            {{- end }}
+            - -evict-backoff={{ .Values.evictBackoff }}
             - -v=8
           resources:
 {{ toYaml .Values.resources | indent 12 }}

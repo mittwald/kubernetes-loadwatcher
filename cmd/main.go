@@ -17,7 +17,9 @@ func main() {
 	var f config.StartupFlags
 
 	flag.StringVar(&f.KubeConfig, "kubeconfig", "", "file path to kubeconfig")
-	flag.IntVar(&f.LoadThreshold, "load-threshold", 0, "load threshold value (set to 0 for automatic detection)")
+	flag.IntVar(&f.TaintThreshold, "taint-threshold", 0, "load threshold value (set to 0 for automatic detection)")
+	flag.IntVar(&f.EvictThreshold, "evict-threshold", 0, "load threshold value (set to 0 for automatic detection)")
+	flag.StringVar(&f.EvictBackoff, "evict-backoff", "10m", "time to wait between evicting Pods")
 	flag.StringVar(&f.NodeName, "node-name", "", "current node name")
 	flag.Parse()
 
@@ -31,12 +33,17 @@ func main() {
 		panic(err)
 	}
 
-	w, err := loadwatcher.NewWatcher(f.LoadThreshold)
+	w, err := loadwatcher.NewWatcher(f.TaintThreshold)
 	if err != nil {
 		panic(err)
 	}
 
 	t, err := loadwatcher.NewTainter(c, f.NodeName)
+	if err != nil {
+		panic(err)
+	}
+
+	e, err := loadwatcher.NewEvicter(c, f.EvictThreshold, f.NodeName, f.EvictBackoff)
 	if err != nil {
 		panic(err)
 	}
@@ -67,6 +74,10 @@ func main() {
 
 			if err := t.TaintNode(evt); err != nil {
 				glog.Errorf("error while tainting node: %s", err.Error())
+			}
+
+			if _, err := e.EvictPod(evt); err != nil {
+				glog.Errorf("error while evicting pod: %s", err.Error())
 			}
 		case evt, ok := <-dec:
 			if !ok {

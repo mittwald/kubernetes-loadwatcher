@@ -28,7 +28,7 @@ func NewTainter(c kubernetes.Interface, nodeName string) (*Tainter, error) {
 		Interface: c.CoreV1().Events(""),
 	})
 
-	r := b.NewRecorder(scheme.Scheme, v1.EventSource{Host: nodeName, Component: ComponentName})
+	r := b.NewRecorder(scheme.Scheme, v1.EventSource{Host: nodeName, Component: ComponentName + "/tainter"})
 
 	nodeRef := &v1.ObjectReference{
 		Kind:      "Node",

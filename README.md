@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/mittwald/kubernetes-loadwatcher.svg?branch=master)](https://travis-ci.com/mittwald/kubernetes-loadwatcher)
 [![Docker Repository on Quay](https://quay.io/repository/mittwald/kubernetes-loadwatcher/status "Docker Repository on Quay")](https://quay.io/repository/mittwald/kubernetes-loadwatcher)
+[![Maintainability](https://api.codeclimate.com/v1/badges/9b21aca83864d9202fd4/maintainability)](https://codeclimate.com/github/mittwald/kubernetes-loadwatcher/maintainability)
 
 Automatically taint and evict nodes with high CPU load.
 

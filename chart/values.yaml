@@ -1,5 +1,5 @@
 image:
-  repository: quay.io/mittwald/kube-loadwatcher
+  repository: quay.io/mittwald/kubernetes-loadwatcher
   tag: stable
   pullPolicy: IfNotPresent
 

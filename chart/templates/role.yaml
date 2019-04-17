@@ -13,7 +13,7 @@ rules:
   verbs: ["get", "watch", "list", "update", "patch"]
 - apiGroups: [""]
   resources: ["events"]
-  verbs: ["create"]
+  verbs: ["create", "patch", "list", "get"]
 - apiGroups: [""]
   resources: ["pods/eviction"]
   verbs: ["create"]

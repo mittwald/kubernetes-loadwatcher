@@ -37,12 +37,26 @@ func (w *Watcher) Run(ctx context.Context) (<-chan LoadThresholdEvent, <-chan Lo
 
 				klog.Infof("current state: high_load=%t load5=%.2f load15=%.2f threshold=%.2f", w.isCurrentlyHigh, loadStat.Load5, loadStat.Load15, w.LoadThreshold)
 
-				if loadStat.Load5 >= w.LoadThreshold && !w.isCurrentlyHigh {
+				if loadStat.Load5 >= w.LoadThreshold {
+					evt := LoadThresholdEvent{
+						Load5:         loadStat.Load5,
+						Load15:        loadStat.Load15,
+						LoadThreshold: w.LoadThreshold,
+						WasHigh:       w.isCurrentlyHigh,
+						IsHigh:        true,
+					}
 					w.isCurrentlyHigh = true
-					exceeded <- LoadThresholdEvent{Load5: loadStat.Load5, Load15: loadStat.Load15, LoadThreshold: w.LoadThreshold}
+					exceeded <- evt
 				} else if loadStat.Load5 < w.LoadThreshold && loadStat.Load15 < w.LoadThreshold && w.isCurrentlyHigh {
+					evt := LoadThresholdEvent{
+						Load5:         loadStat.Load5,
+						Load15:        loadStat.Load15,
+						LoadThreshold: w.LoadThreshold,
+						WasHigh:       w.isCurrentlyHigh,
+						IsHigh:        false,
+					}
 					w.isCurrentlyHigh = false
-					deceeded <- LoadThresholdEvent{Load5: loadStat.Load5, Load15: loadStat.Load15, LoadThreshold: w.LoadThreshold}
+					deceeded <- evt
 				}
 			case <-ctx.Done():
 				if err := ctx.Err(); err != nil {

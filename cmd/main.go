@@ -84,10 +84,12 @@ func main() {
 				return
 			}
 
-			klog.Infof("load5 exceeded threshold, load5=%f load15=%f", evt.Load5, evt.Load15)
+			if evt.ChangedToHigh() {
+				klog.Infof("load5 exceeded threshold, load5=%f load15=%f", evt.Load5, evt.Load15)
 
-			if err := t.TaintNode(ctx, evt); err != nil {
-				klog.Errorf("error while tainting node: %s", err.Error())
+				if err := t.TaintNode(ctx, evt); err != nil {
+					klog.Errorf("error while tainting node: %s", err.Error())
+				}
 			}
 
 			if _, err := e.EvictPod(ctx, evt); err != nil {

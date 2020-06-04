@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/golang/glog"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/config"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/loadwatcher"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +16,8 @@ import (
 
 func main() {
 	var f config.StartupFlags
+
+	klog.InitFlags(nil)
 
 	flag.StringVar(&f.KubeConfig, "kubeconfig", "", "file path to kubeconfig")
 	flag.IntVar(&f.TaintThreshold, "taint-threshold", 0, "load threshold value (set to 0 for automatic detection)")
@@ -61,7 +63,7 @@ func main() {
 	go func() {
 		s := <-sigChan
 
-		glog.Infof("received signal %s", s)
+		klog.Infof("received signal %s", s)
 
 		cancelFn()
 	}()
@@ -78,29 +80,29 @@ func main() {
 		select {
 		case evt, ok := <-exc:
 			if !ok {
-				glog.Infof("exceedance channel closed; stopping")
+				klog.Infof("exceedance channel closed; stopping")
 				return
 			}
 
-			glog.Infof("load5 exceeded threshold, load5=%f load15=%f", evt.Load5, evt.Load15)
+			klog.Infof("load5 exceeded threshold, load5=%f load15=%f", evt.Load5, evt.Load15)
 
 			if err := t.TaintNode(ctx, evt); err != nil {
-				glog.Errorf("error while tainting node: %s", err.Error())
+				klog.Errorf("error while tainting node: %s", err.Error())
 			}
 
 			if _, err := e.EvictPod(ctx, evt); err != nil {
-				glog.Errorf("error while evicting pod: %s", err.Error())
+				klog.Errorf("error while evicting pod: %s", err.Error())
 			}
 		case evt, ok := <-dec:
 			if !ok {
-				glog.Infof("deceedance channel closed; stopping")
+				klog.Infof("deceedance channel closed; stopping")
 				return
 			}
 
-			glog.Infof("load15 deceeded threshold, load5=%f load15=%f", evt.Load5, evt.Load15)
+			klog.Infof("load15 deceeded threshold, load5=%f load15=%f", evt.Load5, evt.Load15)
 
 			if err := t.UntaintNode(ctx, evt); err != nil {
-				glog.Errorf("error while removing taint from node: %s", err.Error())
+				klog.Errorf("error while removing taint from node: %s", err.Error())
 			}
 		case err, ok := <-errs:
 			if !ok {
@@ -108,7 +110,7 @@ func main() {
 			}
 
 			if err != nil {
-				glog.Errorf("error while polling for status updates: %s", err.Error())
+				klog.Errorf("error while polling for status updates: %s", err.Error())
 			}
 		}
 	}

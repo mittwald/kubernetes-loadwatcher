@@ -2,8 +2,8 @@ package loadwatcher
 
 import (
 	"context"
-	"github.com/golang/glog"
 	"github.com/shirou/gopsutil/load"
+	"k8s.io/klog"
 	"time"
 )
 
@@ -32,7 +32,7 @@ func (w *Watcher) Run(ctx context.Context) (<-chan LoadThresholdEvent, <-chan Lo
 					errs <- err
 				}
 
-				glog.Infof("current state: high_load=%t load5=%.2f load15=%.2f threshold=%.2f", w.isCurrentlyHigh, loadStat.Load5, loadStat.Load15, w.LoadThreshold)
+				klog.Infof("current state: high_load=%t load5=%.2f load15=%.2f threshold=%.2f", w.isCurrentlyHigh, loadStat.Load5, loadStat.Load15, w.LoadThreshold)
 
 				if loadStat.Load5 >= w.LoadThreshold && !w.isCurrentlyHigh {
 					w.isCurrentlyHigh = true

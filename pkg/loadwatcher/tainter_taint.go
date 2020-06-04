@@ -3,11 +3,11 @@ package loadwatcher
 import (
 	"context"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/jsonpatch"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog"
 )
 
 func (t *Tainter) IsNodeTainted(ctx context.Context) (bool, error) {
@@ -39,7 +39,7 @@ func (t *Tainter) TaintNode(ctx context.Context, evt LoadThresholdEvent) error {
 
 	for i := range nodeCopy.Spec.Taints {
 		if nodeCopy.Spec.Taints[i].Key == TaintKey {
-			glog.Infof("wanted to taint node %s, but taint already exists", nodeCopy.Name)
+			klog.Infof("wanted to taint node %s, but taint already exists", nodeCopy.Name)
 			return nil
 		}
 	}
@@ -78,7 +78,7 @@ func (t *Tainter) UntaintNode(ctx context.Context, evt LoadThresholdEvent) error
 	}
 
 	if taintIndex == -1 {
-		glog.Infof("wanted to remove taint from node %s, but taint was already gone", node.Name)
+		klog.Infof("wanted to remove taint from node %s, but taint was already gone", node.Name)
 		return nil
 	}
 

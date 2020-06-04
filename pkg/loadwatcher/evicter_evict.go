@@ -2,11 +2,11 @@ package loadwatcher
 
 import (
 	"context"
-	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/klog"
 	"time"
 )
 
@@ -24,11 +24,11 @@ func (e *Evicter) EvictPod(ctx context.Context, evt LoadThresholdEvent) (bool, e
 	}
 
 	if !e.CanEvict() {
-		glog.Infof("eviction threshold exceeded; still in back-off")
+		klog.Infof("eviction threshold exceeded; still in back-off")
 		return false, nil
 	}
 
-	glog.Infof("searching for pod to evict")
+	klog.Infof("searching for pod to evict")
 
 	fieldSelector := fields.OneTermEqualSelector("spec.nodeName", e.nodeName)
 
@@ -55,7 +55,7 @@ func (e *Evicter) EvictPod(ctx context.Context, evt LoadThresholdEvent) (bool, e
 		},
 	}
 
-	glog.Infof("eviction: %+v", eviction)
+	klog.Infof("eviction: %+v", eviction)
 
 	e.lastEviction = time.Now()
 

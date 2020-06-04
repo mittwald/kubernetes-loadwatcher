@@ -1,13 +1,13 @@
 package loadwatcher
 
 import (
-	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/klog"
 	"time"
 )
 
@@ -37,7 +37,7 @@ func NewEvicter(client kubernetes.Interface, threshold int, nodeName string, bac
 	}
 
 	b := record.NewBroadcaster()
-	b.StartLogging(glog.Infof)
+	b.StartLogging(klog.Infof)
 	b.StartRecordingToSink(&typedv1.EventSinkImpl{
 		Interface: client.CoreV1().Events(""),
 	})

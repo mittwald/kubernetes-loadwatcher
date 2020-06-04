@@ -85,12 +85,12 @@ func (t *Tainter) UntaintNode(ctx context.Context, evt LoadThresholdEvent) error
 	t.recorder.Eventf(t.nodeRef, v1.EventTypeNormal, "LoadThresholdDeceeded", "load15 on node was %.2f; deceeded threshold of %.2f. untainting node", evt.Load15, evt.LoadThreshold)
 
 	_, err = t.client.CoreV1().Nodes().Patch(ctx, t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
-		Op: "test",
-		Path: fmt.Sprintf("/spec/taints/%d/key", taintIndex),
+		Op:    "test",
+		Path:  fmt.Sprintf("/spec/taints/%d/key", taintIndex),
 		Value: TaintKey,
 	}, {
-		Op:   "remove",
-		Path: fmt.Sprintf("/spec/taints/%d", taintIndex),
+		Op:    "remove",
+		Path:  fmt.Sprintf("/spec/taints/%d", taintIndex),
 		Value: "",
 	}}.ToJSON(), metav1.PatchOptions{})
 

@@ -50,7 +50,7 @@ func (e *Evicter) EvictPod(ctx context.Context, evt LoadThresholdEvent) (bool, e
 
 	eviction := v1beta1.Eviction{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: podToEvict.ObjectMeta.Name,
+			Name:      podToEvict.ObjectMeta.Name,
 			Namespace: podToEvict.ObjectMeta.Namespace,
 		},
 	}

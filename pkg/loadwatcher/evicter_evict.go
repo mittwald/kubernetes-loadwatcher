@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// CanEvict determines if the evicter can now evict a Pod at this time, or if it
+// is still in its back-off period.
 func (e *Evicter) CanEvict() bool {
 	if e.lastEviction.IsZero() {
 		return true
@@ -18,6 +20,7 @@ func (e *Evicter) CanEvict() bool {
 	return time.Now().Sub(e.lastEviction) > e.backoff
 }
 
+// EvictPod tries to pick a suitable Pod for eviction and evict it.
 func (e *Evicter) EvictPod(ctx context.Context, evt LoadThresholdEvent) (bool, error) {
 	if evt.Load15 < e.threshold {
 		return false, nil

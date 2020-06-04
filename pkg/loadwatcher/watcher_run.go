@@ -11,6 +11,9 @@ func (w *Watcher) SetAsHigh(high bool) {
 	w.isCurrentlyHigh = high
 }
 
+// Run contains the main loop of the load watcher. At a configurable interval,
+// it will query the nodes CPU load and emit "LoadThresholdEvents" when a
+// "high load" condition is encountered (or that condition passes again).
 func (w *Watcher) Run(ctx context.Context) (<-chan LoadThresholdEvent, <-chan LoadThresholdEvent, <-chan error) {
 	exceeded := make(chan LoadThresholdEvent)
 	deceeded := make(chan LoadThresholdEvent)

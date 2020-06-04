@@ -10,6 +10,9 @@ import (
 	"k8s.io/klog"
 )
 
+// IsNodeTainted tests is the current node is already tainted. This may happen
+// if the loadwatcher happens to restart (for whichever reason) AFTER it has
+// tainted the node and then terminates before it can remove the taint.
 func (t *Tainter) IsNodeTainted(ctx context.Context) (bool, error) {
 	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -25,6 +28,8 @@ func (t *Tainter) IsNodeTainted(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
+// TaintNode taints the current node and attaches a respective Event object to
+// the node.
 func (t *Tainter) TaintNode(ctx context.Context, evt LoadThresholdEvent) error {
 	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -62,6 +67,7 @@ func (t *Tainter) TaintNode(ctx context.Context, evt LoadThresholdEvent) error {
 	return nil
 }
 
+// UntaintNode removes the taint from the node again
 func (t *Tainter) UntaintNode(ctx context.Context, evt LoadThresholdEvent) error {
 	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {

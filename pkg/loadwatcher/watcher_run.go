@@ -1,6 +1,7 @@
 package loadwatcher
 
 import (
+	"context"
 	"github.com/golang/glog"
 	"github.com/shirou/gopsutil/load"
 	"time"
@@ -10,7 +11,7 @@ func (w *Watcher) SetAsHigh(high bool) {
 	w.isCurrentlyHigh = high
 }
 
-func (w *Watcher) Run(closeChan chan struct{}) (<-chan LoadThresholdEvent, <-chan LoadThresholdEvent, <-chan error) {
+func (w *Watcher) Run(ctx context.Context) (<-chan LoadThresholdEvent, <-chan LoadThresholdEvent, <-chan error) {
 	exceeded := make(chan LoadThresholdEvent)
 	deceeded := make(chan LoadThresholdEvent)
 	errs := make(chan error)
@@ -40,7 +41,10 @@ func (w *Watcher) Run(closeChan chan struct{}) (<-chan LoadThresholdEvent, <-cha
 					w.isCurrentlyHigh = false
 					deceeded <- LoadThresholdEvent{Load5: loadStat.Load5, Load15: loadStat.Load15, LoadThreshold: w.LoadThreshold}
 				}
-			case <-closeChan:
+			case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
+					errs <- err
+				}
 				return
 			}
 		}

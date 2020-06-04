@@ -1,6 +1,7 @@
 package loadwatcher
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/jsonpatch"
@@ -9,8 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (t *Tainter) IsNodeTainted() (bool, error) {
-	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+func (t *Tainter) IsNodeTainted(ctx context.Context) (bool, error) {
+	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -24,8 +25,8 @@ func (t *Tainter) IsNodeTainted() (bool, error) {
 	return false, nil
 }
 
-func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
-	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+func (t *Tainter) TaintNode(ctx context.Context, evt LoadThresholdEvent) error {
+	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 		Effect: v1.TaintEffectPreferNoSchedule,
 	})
 
-	_, err = t.client.CoreV1().Nodes().Update(nodeCopy)
+	_, err = t.client.CoreV1().Nodes().Update(ctx, nodeCopy, metav1.UpdateOptions{})
 
 	t.recorder.Eventf(t.nodeRef, v1.EventTypeWarning, "LoadThresholdExceeded", "load5 on node was %.2f; exceeded threshold of %.2f. tainting node", evt.Load5, evt.LoadThreshold)
 
@@ -61,8 +62,8 @@ func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 	return nil
 }
 
-func (t *Tainter) UntaintNode(evt LoadThresholdEvent) error {
-	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+func (t *Tainter) UntaintNode(ctx context.Context, evt LoadThresholdEvent) error {
+	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func (t *Tainter) UntaintNode(evt LoadThresholdEvent) error {
 
 	t.recorder.Eventf(t.nodeRef, v1.EventTypeNormal, "LoadThresholdDeceeded", "load15 on node was %.2f; deceeded threshold of %.2f. untainting node", evt.Load15, evt.LoadThreshold)
 
-	_, err = t.client.CoreV1().Nodes().Patch(t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
+	_, err = t.client.CoreV1().Nodes().Patch(ctx, t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
 		Op: "test",
 		Path: fmt.Sprintf("/spec/taints/%d/key", taintIndex),
 		Value: TaintKey,
@@ -91,7 +92,7 @@ func (t *Tainter) UntaintNode(evt LoadThresholdEvent) error {
 		Op:   "remove",
 		Path: fmt.Sprintf("/spec/taints/%d", taintIndex),
 		Value: "",
-	}}.ToJSON())
+	}}.ToJSON(), metav1.PatchOptions{})
 
 	if err != nil {
 		t.recorder.Eventf(t.nodeRef, v1.EventTypeWarning, "NodePatchError", "could not patch node: %s", err.Error())

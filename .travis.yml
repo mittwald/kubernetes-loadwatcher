@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - '1.12'
+  - '1.14'
 
 before_script:
   - sudo sysctl -w net.ipv4.ip_forward=1
@@ -13,7 +13,7 @@ env:
   global:
     - GO111MODULE=on
     - CGO_ENABLED=0
-    - GO_VERSION=1.12
+    - GO_VERSION=1.14
     - secure: a6FJSuOoyjy4SZMvBLobprLMtKReOAX8c528jCe/HapvWkd0b8muSNDqiDNuf9S4dxkBd7Vq93LblPCs8mCVnMDx3Isx/Z1n6SeNefXmWMDaRUR72G0Dlb6gUfDEwqej9dMOAoFHFqtzGHB6TexTBjyM3y5GGo0T5Kt1AcslMt/bWcAu460+meuPRoFKd5pLjz/kCx7a2FGm63Jt0Zi8uN8vqAkJb15kcZWBNHyJJL0YXFIeBNJsfrAeBeRX20bpRWKuGJDAZiKlnUVQolHaUxrg8ZvHBGbCKEJQqRe+ZpMNo9Im7Xm00pHCPcgcGLDg5+8xtjQPmanhpY9Aun5PAD9oPXNlQ7wEKkC7SiXOyfm5PaT71yaZfi+7Qe4HwbwoZMXDF+XvgFjGoLT5hVawKW32/bs6SfuLWcl2nKRtIDjHm2K8P6uzO7YUUEidF2CsjS9Rf7fHuoAHLov82xdO+iUTEmZ3mySdrY3WO3niPcuBMg0C4E4aYRbDpP/LMNl75odwA1i/FZwFsTTp9yho9A0nn/djNq3INUumac/D8N0lPbvRyy5Xh69MVXb9YovbV4iHi8D8OZLOBoe98DOKy/zpNy0hzesJWR3ytWOBuVhseu1CiHoVOrJsyaGE9hOZz3k9g/NYHOtw3UJ01Kuhm7rJCyWclaxqmRZkHOOjQq8=
 script:
   - bash <(wget -qO- https://git.io/goreleaser) --snapshot --skip-publish --rm-dist

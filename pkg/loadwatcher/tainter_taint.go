@@ -1,16 +1,20 @@
 package loadwatcher
 
 import (
+	"context"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/jsonpatch"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog"
 )
 
-func (t *Tainter) IsNodeTainted() (bool, error) {
-	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+// IsNodeTainted tests is the current node is already tainted. This may happen
+// if the loadwatcher happens to restart (for whichever reason) AFTER it has
+// tainted the node and then terminates before it can remove the taint.
+func (t *Tainter) IsNodeTainted(ctx context.Context) (bool, error) {
+	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -24,8 +28,10 @@ func (t *Tainter) IsNodeTainted() (bool, error) {
 	return false, nil
 }
 
-func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
-	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+// TaintNode taints the current node and attaches a respective Event object to
+// the node.
+func (t *Tainter) TaintNode(ctx context.Context, evt LoadThresholdEvent) error {
+	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -38,7 +44,7 @@ func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 
 	for i := range nodeCopy.Spec.Taints {
 		if nodeCopy.Spec.Taints[i].Key == TaintKey {
-			glog.Infof("wanted to taint node %s, but taint already exists", nodeCopy.Name)
+			klog.Infof("wanted to taint node %s, but taint already exists", nodeCopy.Name)
 			return nil
 		}
 	}
@@ -49,7 +55,7 @@ func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 		Effect: v1.TaintEffectPreferNoSchedule,
 	})
 
-	_, err = t.client.CoreV1().Nodes().Update(nodeCopy)
+	_, err = t.client.CoreV1().Nodes().Update(ctx, nodeCopy, metav1.UpdateOptions{})
 
 	t.recorder.Eventf(t.nodeRef, v1.EventTypeWarning, "LoadThresholdExceeded", "load5 on node was %.2f; exceeded threshold of %.2f. tainting node", evt.Load5, evt.LoadThreshold)
 
@@ -61,8 +67,9 @@ func (t *Tainter) TaintNode(evt LoadThresholdEvent) error {
 	return nil
 }
 
-func (t *Tainter) UntaintNode(evt LoadThresholdEvent) error {
-	node, err := t.client.CoreV1().Nodes().Get(t.nodeName, metav1.GetOptions{})
+// UntaintNode removes the taint from the node again
+func (t *Tainter) UntaintNode(ctx context.Context, evt LoadThresholdEvent) error {
+	node, err := t.client.CoreV1().Nodes().Get(ctx, t.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -77,21 +84,21 @@ func (t *Tainter) UntaintNode(evt LoadThresholdEvent) error {
 	}
 
 	if taintIndex == -1 {
-		glog.Infof("wanted to remove taint from node %s, but taint was already gone", node.Name)
+		klog.Infof("wanted to remove taint from node %s, but taint was already gone", node.Name)
 		return nil
 	}
 
 	t.recorder.Eventf(t.nodeRef, v1.EventTypeNormal, "LoadThresholdDeceeded", "load15 on node was %.2f; deceeded threshold of %.2f. untainting node", evt.Load15, evt.LoadThreshold)
 
-	_, err = t.client.CoreV1().Nodes().Patch(t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
-		Op: "test",
-		Path: fmt.Sprintf("/spec/taints/%d/key", taintIndex),
+	_, err = t.client.CoreV1().Nodes().Patch(ctx, t.nodeName, types.JSONPatchType, jsonpatch.PatchList{{
+		Op:    "test",
+		Path:  fmt.Sprintf("/spec/taints/%d/key", taintIndex),
 		Value: TaintKey,
 	}, {
-		Op:   "remove",
-		Path: fmt.Sprintf("/spec/taints/%d", taintIndex),
+		Op:    "remove",
+		Path:  fmt.Sprintf("/spec/taints/%d", taintIndex),
 		Value: "",
-	}}.ToJSON())
+	}}.ToJSON(), metav1.PatchOptions{})
 
 	if err != nil {
 		t.recorder.Eventf(t.nodeRef, v1.EventTypeWarning, "NodePatchError", "could not patch node: %s", err.Error())

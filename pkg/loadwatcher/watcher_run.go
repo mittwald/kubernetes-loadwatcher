@@ -1,8 +1,9 @@
 package loadwatcher
 
 import (
-	"github.com/golang/glog"
+	"context"
 	"github.com/shirou/gopsutil/load"
+	"k8s.io/klog"
 	"time"
 )
 
@@ -10,7 +11,10 @@ func (w *Watcher) SetAsHigh(high bool) {
 	w.isCurrentlyHigh = high
 }
 
-func (w *Watcher) Run(closeChan chan struct{}) (<-chan LoadThresholdEvent, <-chan LoadThresholdEvent, <-chan error) {
+// Run contains the main loop of the load watcher. At a configurable interval,
+// it will query the nodes CPU load and emit "LoadThresholdEvents" when a
+// "high load" condition is encountered (or that condition passes again).
+func (w *Watcher) Run(ctx context.Context) (<-chan LoadThresholdEvent, <-chan LoadThresholdEvent, <-chan error) {
 	exceeded := make(chan LoadThresholdEvent)
 	deceeded := make(chan LoadThresholdEvent)
 	errs := make(chan error)
@@ -31,7 +35,7 @@ func (w *Watcher) Run(closeChan chan struct{}) (<-chan LoadThresholdEvent, <-cha
 					errs <- err
 				}
 
-				glog.Infof("current state: high_load=%t load5=%.2f load15=%.2f threshold=%.2f", w.isCurrentlyHigh, loadStat.Load5, loadStat.Load15, w.LoadThreshold)
+				klog.Infof("current state: high_load=%t load5=%.2f load15=%.2f threshold=%.2f", w.isCurrentlyHigh, loadStat.Load5, loadStat.Load15, w.LoadThreshold)
 
 				if loadStat.Load5 >= w.LoadThreshold && !w.isCurrentlyHigh {
 					w.isCurrentlyHigh = true
@@ -40,7 +44,10 @@ func (w *Watcher) Run(closeChan chan struct{}) (<-chan LoadThresholdEvent, <-cha
 					w.isCurrentlyHigh = false
 					deceeded <- LoadThresholdEvent{Load5: loadStat.Load5, Load15: loadStat.Load15, LoadThreshold: w.LoadThreshold}
 				}
-			case <-closeChan:
+			case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
+					errs <- err
+				}
 				return
 			}
 		}

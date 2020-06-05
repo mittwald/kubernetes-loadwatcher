@@ -1,8 +1,8 @@
 package loadwatcher
 
 import (
-	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
+	"k8s.io/klog"
 	"sort"
 )
 
@@ -100,7 +100,7 @@ func (s PodCandidateSet) SelectPodForEviction() *v1.Pod {
 	sort.Stable(sort.Reverse(s))
 
 	for i := range s {
-		glog.Infof("eviction candidate: %s/%s (score of %d)", s[i].Pod.Namespace, s[i].Pod.Name, s[i].Score)
+		klog.Infof("eviction candidate: %s/%s (score of %d)", s[i].Pod.Namespace, s[i].Pod.Name, s[i].Score)
 	}
 
 	for i := range s {
@@ -108,7 +108,7 @@ func (s PodCandidateSet) SelectPodForEviction() *v1.Pod {
 			continue
 		}
 
-		glog.Infof("selected candidate: %s/%s (score of %d)", s[i].Pod.Namespace, s[i].Pod.Name, s[i].Score)
+		klog.Infof("selected candidate: %s/%s (score of %d)", s[i].Pod.Namespace, s[i].Pod.Name, s[i].Score)
 		return s[i].Pod
 	}
 

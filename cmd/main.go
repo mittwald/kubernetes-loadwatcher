@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/config"
 	"github.com/mittwald/kubernetes-loadwatcher/pkg/loadwatcher"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
